@@ -13,17 +13,12 @@ try:
     conn = pyodbc.connect(connection_string)
     cursor = conn.cursor()
 
-    # Create the SearchHistory table if it doesn't exist
-    cursor.execute('''
-        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SearchHistory' AND xtype='U')
-        CREATE TABLE SearchHistory (
-            ID INT IDENTITY(1,1) PRIMARY KEY,
-            Location NVARCHAR(100) NOT NULL,
-            SearchDate DATETIME NOT NULL
-        )
-    ''')
+    # Insert a sample record
+    location = 'New York'
+    search_date = '2023-10-01'
+    cursor.execute("INSERT INTO SearchHistory (Location, SearchDate) VALUES (?, ?)", location, search_date)
     conn.commit()
-    print("SearchHistory table created successfully!")
+    print("Data inserted successfully!")
 except pyodbc.Error as e:
     print(f"An error occurred: {e}")
 finally:
