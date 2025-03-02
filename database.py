@@ -1,12 +1,12 @@
-import pyodbc
+from dotenv import load_dotenv
+import os
 
-# Database connection details (hardcoded credentials)
-server = 'weatherwise-server.database.windows.net'  # Azure SQL Server name
-database = 'WeatherWiseDB'  # Database name
-username = 'milestone2'  # Database username
-password = 'Mcmaster123'  # Database password
-driver = '{ODBC Driver 18 for SQL Server}'  # ODBC driver for SQL Server
+load_dotenv()  # Load environment variables
 
+server = os.getenv("DB_SERVER")
+database = os.getenv("DB_NAME")
+username = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
 try:
     # Establish connection with timeout
     connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Connection Timeout=30'
