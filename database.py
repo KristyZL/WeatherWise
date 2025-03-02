@@ -13,12 +13,12 @@ try:
     conn = pyodbc.connect(connection_string)
     cursor = conn.cursor()
 
-    # Insert a sample record
-    location = 'New York'
-    search_date = '2023-10-01'
-    cursor.execute("INSERT INTO SearchHistory (Location, SearchDate) VALUES (?, ?)", location, search_date)
-    conn.commit()
-    print("Data inserted successfully!")
+    # Retrieve and display all records
+    cursor.execute("SELECT * FROM SearchHistory")
+    rows = cursor.fetchall()
+    print("Search History:")
+    for row in rows:
+        print(f"ID: {row.ID}, Location: {row.Location}, Search Date: {row.SearchDate}")
 except pyodbc.Error as e:
     print(f"An error occurred: {e}")
 finally:
