@@ -20,7 +20,9 @@ try:
     for row in rows:
         print(f"ID: {row.ID}, Location: {row.Location}, Search Date: {row.SearchDate}")
 except pyodbc.Error as e:
-    print(f"An error occurred: {e}")
+    print(f"Database error: {e}")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
 finally:
     # Close the connection
     if 'conn' in locals():
