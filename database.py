@@ -8,8 +8,8 @@ password = 'Mcmaster123'  # Database password
 driver = '{ODBC Driver 18 for SQL Server}'  # ODBC driver for SQL Server
 
 try:
-    # Establish connection
-    connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+    # Establish connection with timeout
+    connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Connection Timeout=30'
     conn = pyodbc.connect(connection_string)
     cursor = conn.cursor()
 
