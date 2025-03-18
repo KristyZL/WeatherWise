@@ -20,7 +20,7 @@ password = os.getenv("DB_PASSWORD")
 driver = "{ODBC Driver 18 for SQL Server}"
 
 # OpenWeatherMap API credentials
-weather_api_key = os.getenv("6a4c6327626d7a10e3669a83e47314a7")
+weather_api_key = os.getenv("WEATHER_API_KEY")
 weather_api_url = "https://api.openweathermap.org/data/2.5/weather"
 
 max_retries = 3

@@ -1,0 +1,1 @@
+2025-03-17 23:56:34,869 - ERROR - Database connection error: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
