@@ -6,11 +6,13 @@ import logging
 import requests
 from datetime import datetime
 
-# Configure logging
-logging.basicConfig(filename="app.log", level=logging.ERROR, 
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+# Load environment variables securely
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
-load_dotenv()  # Load environment variables
+# Configure logging
+logging.basicConfig(filename="app.log", level=logging.INFO, 
+                    format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Database credentials
 server = os.getenv("DB_SERVER")
@@ -23,28 +25,35 @@ driver = "{ODBC Driver 18 for SQL Server}"
 weather_api_key = os.getenv("WEATHER_API_KEY")
 weather_api_url = "https://api.openweathermap.org/data/2.5/weather"
 
-max_retries = 3
-conn = None  # Define connection variable
+# Ensure API key is loaded
+if not weather_api_key:
+    logging.error("API Key is missing! Check your .env file.")
+    exit("Error: API Key is missing! Check your .env file.")
 
-# Retry logic for database connection
-for attempt in range(max_retries):
-    try:
-        print(f"Attempt {attempt+1}: Connecting to the database...")
-        connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Connection Timeout=30"
-        conn = pyodbc.connect(connection_string, timeout=10)
-        print("Connection successful!")
-        break  # Exit loop if successful
-    except pyodbc.Error as e:
-        logging.error(f"Database connection error: {e}")
-        print(f"Database error: {e}")
-        time.sleep(5)  # Wait before retrying
+def connect_to_database():
+    """
+    Establishes a connection to the Azure SQL Database.
+    Retries up to 3 times before failing.
+    """
+    max_retries = 3
+    conn = None
 
-# Exit if connection failed after multiple attempts
-if conn is None:
-    print("Failed to connect after multiple attempts.")
+    for attempt in range(max_retries):
+        try:
+            logging.info(f"Attempt {attempt+1}: Connecting to the database...")
+            connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Connect Timeout=60"
+            conn = pyodbc.connect(connection_string, timeout=10)
+            logging.info("Connection successful!")
+            return conn
+        except pyodbc.Error as e:
+            logging.error(f"Database connection error: {e}")
+            print(f"Database error: {e}")
+            time.sleep(5)  # Wait before retrying
+
     logging.error("Database connection failed after multiple attempts.")
-    exit()
+    exit("Failed to connect after multiple attempts.")
 
+conn = connect_to_database()
 cursor = conn.cursor()
 
 # Ensure `WeatherData` table exists
@@ -62,10 +71,10 @@ try:
         )
     ''')
     conn.commit()
-    print("Ensured WeatherData table exists.")
+    logging.info("Ensured WeatherData table exists.")
 except pyodbc.Error as e:
     logging.error(f"Error ensuring WeatherData table exists: {e}")
-    print("Error creating WeatherData table. Check logs for details.")
+    exit("Error creating WeatherData table. Check logs for details.")
 
 def fetch_weather_data(location):
     """
@@ -86,6 +95,8 @@ def fetch_weather_data(location):
             wind_speed = data["wind"]["speed"]
             description = data["weather"][0]["description"]
             
+            logging.info(f"Fetched weather data for {location}: {temperature}°C, {humidity}%, {wind_speed}m/s, {description}")
+            
             print(f"\nWeather Data for {location}:")
             print(f"Temperature: {temperature}°C")
             print(f"Humidity: {humidity}%")
@@ -95,6 +106,7 @@ def fetch_weather_data(location):
             return (location, temperature, humidity, wind_speed, description, datetime.now())
 
         else:
+            logging.error(f"Error fetching weather data: {data.get('message', 'Unknown error')}")
             print(f"Error fetching weather data: {data.get('message', 'Unknown error')}")
             return None
 
@@ -114,6 +126,7 @@ def save_weather_data(weather_info):
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', weather_info)
             conn.commit()
+            logging.info(f"Weather data for {weather_info[0]} saved successfully!")
             print("Weather data saved successfully!\n")
         except pyodbc.Error as e:
             logging.error(f"Database insert error: {e}")
@@ -147,3 +160,4 @@ except pyodbc.Error as e:
 finally:
     if conn:
         conn.close()
+        logging.info("Database connection closed.")
