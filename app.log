@@ -1,1 +1,8 @@
 2025-03-17 23:56:34,869 - ERROR - Database connection error: ('HYT00', '[HYT00] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)')
+2025-03-18 00:04:32,039 - ERROR - API Key is missing! Check your .env file.
+2025-03-18 00:06:00,419 - INFO - Attempt 1: Connecting to the database...
+2025-03-18 00:06:01,181 - INFO - Connection successful!
+2025-03-18 00:06:01,488 - INFO - Ensured WeatherData table exists.
+2025-03-18 00:06:08,675 - INFO - Fetched weather data for Toronto: 1.12°C, 82%, 3.6m/s, clear sky
+2025-03-18 00:06:08,800 - INFO - Weather data for Toronto saved successfully!
+2025-03-18 00:06:08,904 - INFO - Database connection closed.
