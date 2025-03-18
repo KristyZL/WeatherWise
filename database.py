@@ -3,6 +3,8 @@ import os
 import time
 import pyodbc
 import logging
+import requests
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(filename="app.log", level=logging.ERROR, 
@@ -10,11 +12,16 @@ logging.basicConfig(filename="app.log", level=logging.ERROR,
 
 load_dotenv()  # Load environment variables
 
+# Database credentials
 server = os.getenv("DB_SERVER")
 database = os.getenv("DB_NAME")
 username = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
 driver = "{ODBC Driver 18 for SQL Server}"
+
+# OpenWeatherMap API credentials
+weather_api_key = os.getenv("6a4c6327626d7a10e3669a83e47314a7")
+weather_api_url = "https://api.openweathermap.org/data/2.5/weather"
 
 max_retries = 3
 conn = None  # Define connection variable
@@ -40,44 +47,103 @@ if conn is None:
 
 cursor = conn.cursor()
 
-# Ensure `SearchHistory` table exists before running any queries
+# Ensure `WeatherData` table exists
 try:
     cursor.execute('''
-        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SearchHistory' AND xtype='U')
-        CREATE TABLE SearchHistory (
+        IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='WeatherData' AND xtype='U')
+        CREATE TABLE WeatherData (
             ID INT IDENTITY(1,1) PRIMARY KEY,
             Location NVARCHAR(100) NOT NULL,
+            Temperature FLOAT NOT NULL,
+            Humidity INT NOT NULL,
+            WindSpeed FLOAT NOT NULL,
+            Description NVARCHAR(255) NOT NULL,
             SearchDate DATETIME NOT NULL
         )
     ''')
     conn.commit()
-    print("Ensured SearchHistory table exists.")
+    print("Ensured WeatherData table exists.")
 except pyodbc.Error as e:
-    logging.error(f"Error ensuring SearchHistory table exists: {e}")
-    print("Error creating table. Check logs for details.")
+    logging.error(f"Error ensuring WeatherData table exists: {e}")
+    print("Error creating WeatherData table. Check logs for details.")
 
-#  Get user input for a specific location
-location = input("Enter location to search: ")
+def fetch_weather_data(location):
+    """
+    Fetches weather data from OpenWeatherMap API.
+    """
+    try:
+        params = {
+            "q": location,
+            "appid": weather_api_key,
+            "units": "metric"  # Fetch data in Celsius
+        }
+        response = requests.get(weather_api_url, params=params)
+        data = response.json()
 
+        if response.status_code == 200:
+            temperature = data["main"]["temp"]
+            humidity = data["main"]["humidity"]
+            wind_speed = data["wind"]["speed"]
+            description = data["weather"][0]["description"]
+            
+            print(f"\nWeather Data for {location}:")
+            print(f"Temperature: {temperature}°C")
+            print(f"Humidity: {humidity}%")
+            print(f"Wind Speed: {wind_speed} m/s")
+            print(f"Description: {description.capitalize()}\n")
+
+            return (location, temperature, humidity, wind_speed, description, datetime.now())
+
+        else:
+            print(f"Error fetching weather data: {data.get('message', 'Unknown error')}")
+            return None
+
+    except requests.RequestException as e:
+        logging.error(f"API request error: {e}")
+        print("Failed to retrieve weather data. Check logs for details.")
+        return None
+
+def save_weather_data(weather_info):
+    """
+    Saves fetched weather data into the database.
+    """
+    if weather_info:
+        try:
+            cursor.execute('''
+                INSERT INTO WeatherData (Location, Temperature, Humidity, WindSpeed, Description, SearchDate)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', weather_info)
+            conn.commit()
+            print("Weather data saved successfully!\n")
+        except pyodbc.Error as e:
+            logging.error(f"Database insert error: {e}")
+            print("Failed to save weather data. Check logs for details.")
+
+# User input for location
+location = input("Enter a location to fetch weather data: ")
+
+# Fetch and save weather data
+weather_data = fetch_weather_data(location)
+if weather_data:
+    save_weather_data(weather_data)
+
+# Retrieve and display past searches
 try:
-    # Securely execute parameterized query
-    cursor.execute("SELECT * FROM SearchHistory WHERE Location = ?", (location,))
+    cursor.execute("SELECT * FROM WeatherData WHERE Location = ?", (location,))
     rows = cursor.fetchall()
 
-    print("Search History:")
+    print("Past Weather Searches:")
     if not rows:
-        print("No results found.")
+        print("No previous records found.")
     else:
         for row in rows:
-            print(f"ID: {row.ID}, Location: {row.Location}, Search Date: {row.SearchDate}")
+            print(f"{row.SearchDate}: {row.Location} - {row.Temperature}°C, {row.Humidity}% humidity, {row.WindSpeed}m/s, {row.Description}")
 
 except pyodbc.Error as e:
     logging.error(f"Database query error: {e}")
     print("An error occurred while accessing the database. Check logs for details.")
-except Exception as e:
-    logging.error(f"Unexpected error: {e}")
-    print(f"An unexpected error occurred: {e}")
+
+# Close the database connection
 finally:
-    # Close the connection
     if conn:
         conn.close()
