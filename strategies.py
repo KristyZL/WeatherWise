@@ -1,28 +1,29 @@
-# Strategy Pattern: Used to allow flexible formatting of weather data (e.g., simple vs detailed output)
+from abc import ABC, abstractmethod
 from api_handler import fetch_current, fetch_forecast
 
-class WeatherStrategy:
+class WeatherStrategyBase(ABC):
     """
     Strategy interface for weather retrieval.
     """
+    @abstractmethod
     def fetch(self, location):
         pass
 
-class CurrentWeather(WeatherStrategy):
+class CurrentWeather(WeatherStrategyBase):
     """
     Concrete strategy for current weather.
     """
     def fetch(self, location):
         return fetch_current(location)
 
-class ForecastWeather(WeatherStrategy):
+class ForecastWeather(WeatherStrategyBase):
     """
     Concrete strategy for 5-day forecast.
     """
     def fetch(self, location):
         return fetch_forecast(location)
 
-def get_weather(strategy, location):
+def get_weather(strategy: WeatherStrategyBase, location):
     """
     Executes a given weather strategy.
     """
