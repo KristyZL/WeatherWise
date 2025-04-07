@@ -1,10 +1,10 @@
 from strategies import get_weather, CurrentWeather, ForecastWeather
 from db_handler import save_weather_data, display_past_searches
 import logging
-from logger import setup_logger
+from logger import Logger
 
-# Set up logging
-setup_logger()
+# Set up logging using Singleton
+logger = Logger().get_logger()
 
 def main():
     while True:
