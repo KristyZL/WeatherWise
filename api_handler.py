@@ -3,9 +3,8 @@ import logging
 from datetime import datetime
 from collections import defaultdict
 from config import weather_api_key
-from logger import setup_logger
-
-setup_logger()
+from logger import Logger
+logger = Logger().get_logger()
 
 def fetch_current(location):
     """
