@@ -1,10 +1,8 @@
 import pyodbc
 import logging
 from config import server, database, username, password, driver
-from logger import setup_logger
-
-# Set up logging
-setup_logger()
+from logger import Logger
+logger = Logger().get_logger()
 
 def connect_to_database():
     """
