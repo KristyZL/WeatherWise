@@ -1,4 +1,3 @@
-# Repository Pattern: This class provides an abstraction over direct database access, enabling cleaner separation of concerns
 import pyodbc
 import logging
 from config import server, database, username, password, driver
@@ -14,9 +13,11 @@ def connect_to_database():
     try:
         connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
         conn = pyodbc.connect(connection_string)
+        print(f"Connection object: {conn}")
         return conn
     except pyodbc.Error as e:
         logging.error(f"Database connection failed: {e}")
+        print(f"Database connection failed: {e}")
         return None
 
 def save_weather_data(data):
@@ -26,7 +27,7 @@ def save_weather_data(data):
     """
     conn = connect_to_database()
     if not conn:
-        print("DB connection failed.")
+        print("DB connection failed. Unable to establish database connection.")
         return
 
     try:
@@ -58,7 +59,7 @@ def save_weather_data(data):
 
     except pyodbc.Error as e:
         logging.error(f"Insert failed: {e}")
-        print("Failed to save data.")
+        print(f"Failed to save data: {e}")
     finally:
         conn.close()
 
