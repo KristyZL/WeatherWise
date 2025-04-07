@@ -1,6 +1,7 @@
 import requests
 import logging
 from datetime import datetime
+from collections import defaultdict
 from config import weather_api_key
 from logger import setup_logger
 
@@ -61,8 +62,15 @@ def fetch_forecast(location):
         data = response.json()
 
         if response.status_code == 200:
-            print(f"\n5-Day Forecast for {location}:")
+            daily_forecasts = defaultdict(dict)
             for entry in data["list"]:
+                dt = datetime.fromtimestamp(entry["dt"])
+                date_only = dt.date()
+                daily_forecasts[date_only] = entry  # always keeps the latest entry per day
+
+            print(f"\n5-Day Forecast for {location}:")
+            for date in sorted(daily_forecasts.keys())[:5]:  # limit to 5 days
+                entry = daily_forecasts[date]
                 dt = datetime.fromtimestamp(entry["dt"])
                 temp = entry["main"]["temp"]
                 desc = entry["weather"][0]["description"]
