@@ -47,7 +47,10 @@ def save_weather_data(data):
         ''')
 
         # Insert weather data
-        cursor.execute("INSERT INTO SearchHistory (city, temperature) VALUES (?, ?)", (city, temperature, description))
+        cursor.execute('''
+            INSERT INTO WeatherData (Location, Temperature, Humidity, WindSpeed, Description, SearchDate)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', data)
 
         conn.commit()
         print("Weather data saved.")
